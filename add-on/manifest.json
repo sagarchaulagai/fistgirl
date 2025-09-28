@@ -6,6 +6,7 @@
   "icon": "icon.svg",
   "mediaParser": true,
   "mediaListParser": true,
+  "updateUrl": "https://github.com/sagarchaulagai/fistgirl/raw/refs/heads/main/fistgirl-update.json",
   "minApiVersion": 7,
   "scripts": [
     "msparser.js",
