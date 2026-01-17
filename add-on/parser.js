@@ -160,7 +160,7 @@ var msBatchVideoParser = (function()
         },
 
         decryptPaste: function (json, key) {
-            var apiUrl = "https://privatebin-decrypt-api.vercel.app/api/decrypt";
+            var apiUrl = "https://privatebin-decrypt-api-kappa.vercel.app/api/decrypt";
 
             return new Promise(function (resolve, reject) {
                 // Extract the required data from the json response
