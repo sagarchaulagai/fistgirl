@@ -10,8 +10,15 @@ var msBatchVideoParser = (function()
         {
             var url = String(obj.url);
             console.log("FDM Plugin: Starting parse for URL: " + url);
-            
-            return downloadUrlAsUtf8Text(obj.url, obj.cookies || "", [{ key: "X-Requested-With", value: "JSONHttpRequest" }], "")
+
+            var cookiesStr = "";
+            if (Array.isArray(obj.cookies)) {
+                cookiesStr = obj.cookies.map(function(c) { return c.name + "=" + c.value; }).join("\n");
+            } else if (typeof obj.cookies === "string") {
+                cookiesStr = obj.cookies;
+            }
+
+            return downloadUrlAsUtf8Text(obj.url, cookiesStr, [{ key: "X-Requested-With", value: "JSONHttpRequest" }], "")
                 .then(this.parseContent.bind(this, url));
         },
 
@@ -217,7 +224,9 @@ var msBatchVideoParser = (function()
             console.log("FDM Plugin: extractFuckingFastDirectLink called with: " + fuckingFastUrl);
 
             return new Promise(function (resolve, reject) {
-                downloadUrlAsUtf8Text(fuckingFastUrl, "", [], "")
+                downloadUrlAsUtf8Text(fuckingFastUrl, "", [
+                    { key: "User-Agent", value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }
+                ], "")
                     .then(function (response) {
                         console.log("FDM Plugin: Received response from fuckingfast.co");
 
@@ -227,15 +236,30 @@ var msBatchVideoParser = (function()
                         }
 
                         try {
-                            var directLinkRegex = /window\.open\("(https:\/\/fuckingfast\.co\/dl\/[^"]+)"/;
-                            var match = response.body.match(directLinkRegex);
+                            var body = response.body;
+                            var directLink = null;
 
-                            if (match && match[1]) {
-                                var directLink = match[1];
+                            // Pattern 1: window.open("https://fuckingfast.co/dl/...")
+                            var m = body.match(/window\.open\(["'](https:\/\/fuckingfast\.co\/dl\/[^"']+)["']/);
+                            if (m) { directLink = m[1]; }
+
+                            // Pattern 2: href="https://fuckingfast.co/dl/..."
+                            if (!directLink) {
+                                m = body.match(/href=["'](https:\/\/fuckingfast\.co\/dl\/[^"']+)["']/);
+                                if (m) { directLink = m[1]; }
+                            }
+
+                            // Pattern 3: any fuckingfast.co/dl/ URL in script tags
+                            if (!directLink) {
+                                m = body.match(/(https:\/\/fuckingfast\.co\/dl\/[^\s"'<>]+)/);
+                                if (m) { directLink = m[1]; }
+                            }
+
+                            if (directLink) {
                                 console.log("FDM Plugin: Found direct download link: " + directLink);
                                 resolve(directLink);
                             } else {
-                                console.log("FDM Plugin: Could not find direct download link in JavaScript");
+                                console.log("FDM Plugin: Could not find direct download link in page");
                                 reject("Could not extract direct download link from fuckingfast.co page");
                             }
                         } catch (e) {
