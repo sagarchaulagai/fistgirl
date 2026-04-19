@@ -227,7 +227,8 @@ var msBatchVideoParser = (function()
                         }
 
                         try {
-                            var directLinkRegex = /window\.open\("(https:\/\/fuckingfast\.co\/dl\/[^"]+)"/;
+                            // FitGirl now serves direct links from both hosts.
+                            var directLinkRegex = /window\.open\(\s*["'](https?:\/\/(?:dl\.)?fuckingfast\.co\/dl\/[^"']+)["']/;
                             var match = response.body.match(directLinkRegex);
 
                             if (match && match[1]) {
