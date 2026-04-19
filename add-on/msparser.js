@@ -1,5 +1,6 @@
 var msParser = (function()
 {
+    // Support the project: https://ko-fi.com/sagarchaulagain
     function MsParser()
     {
     }

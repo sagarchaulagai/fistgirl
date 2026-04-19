@@ -5,6 +5,12 @@
 
 Fistgirl is Free Download Manager (FDM) add-on that enables seamless downloading from FitGirl Repacks paste links. This add-on automatically extracts and processes download links from `paste.fitgirl-repacks.site` URLs, making it easy to download game repacks directly through FDM.
 
+## Support
+
+If this project helps you, you can support development here:
+
+https://ko-fi.com/sagarchaulagain
+
 ## Installation
 1. Download the add-on (`fistgirl.fda`)
 
