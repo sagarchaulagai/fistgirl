@@ -8,7 +8,6 @@
   "mediaListParser": true,
   "updateUrl": "https://github.com/sagarchaulagai/fistgirl/raw/refs/heads/main/fistgirl-update.json",
   "minApiVersion": 7,
-  "targetApiVersion": 9,
   "scripts": [
     "msparser.js",
     "parser.js"
