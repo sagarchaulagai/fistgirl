@@ -10,8 +10,16 @@ var msParser = (function()
         {
             var url = String(obj.url);
             console.log("FDM msParser: Starting parse for URL: " + url);
-            
+
+            var cookiesStr = "";
+            if (Array.isArray(obj.cookies)) {
+                cookiesStr = obj.cookies.map(function(c) { return c.name + "=" + c.value; }).join("\n");
+            } else if (typeof obj.cookies === "string") {
+                cookiesStr = obj.cookies;
+            }
+
             var self = this;
+            self._cookiesStr = cookiesStr;
             return new Promise(function(resolve, reject)
             {
                 try
@@ -94,8 +102,12 @@ var msParser = (function()
         extractFuckingFastDirectLink: function (fuckingFastUrl) {
             console.log("FDM msParser: extractFuckingFastDirectLink called with: " + fuckingFastUrl);
 
+            var cookiesStr = this._cookiesStr || "";
+
             return new Promise(function (resolve, reject) {
-                downloadUrlAsUtf8Text(fuckingFastUrl, "", [], "")
+                downloadUrlAsUtf8Text(fuckingFastUrl, cookiesStr, [
+                    { key: "User-Agent", value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }
+                ], "")
                     .then(function (response) {
                         console.log("FDM msParser: Received response from fuckingfast.co");
 
@@ -105,16 +117,30 @@ var msParser = (function()
                         }
 
                         try {
-                            // FitGirl now serves direct links from both hosts.
-                            var directLinkRegex = /window\.open\(\s*["'](https?:\/\/(?:dl\.)?fuckingfast\.co\/dl\/[^"']+)["']/;
-                            var match = response.body.match(directLinkRegex);
+                            var body = response.body;
+                            var directLink = null;
 
-                            if (match && match[1]) {
-                                var directLink = match[1];
+                            // Pattern 1: window.open("https://.../dl/...")
+                            var m = body.match(/window\.open\(\s*["'](https?:\/\/(?:dl\.)?fuckingfast\.co\/dl\/[^"']+)["']/);
+                            if (m) { directLink = m[1]; }
+
+                            // Pattern 2: href="https://.../dl/..."
+                            if (!directLink) {
+                                m = body.match(/href=["'](https?:\/\/(?:dl\.)?fuckingfast\.co\/dl\/[^"']+)["']/);
+                                if (m) { directLink = m[1]; }
+                            }
+
+                            // Pattern 3: any host direct /dl/ URL in script tags
+                            if (!directLink) {
+                                m = body.match(/(https?:\/\/(?:dl\.)?fuckingfast\.co\/dl\/[^\s"'<>]+)/);
+                                if (m) { directLink = m[1]; }
+                            }
+
+                            if (directLink) {
                                 console.log("FDM msParser: Found direct download link: " + directLink);
                                 resolve(directLink);
                             } else {
-                                console.log("FDM msParser: Could not find direct download link in JavaScript");
+                                console.log("FDM msParser: Could not find direct download link in page");
                                 reject("Could not extract direct download link from fuckingfast.co page");
                             }
                         } catch (e) {
